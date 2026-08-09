@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>老婆，七夕快乐 | 我们的专属时光机</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        romantic: {
+                            50: '#fff1f2',
+                            100: '#ffe4e6',
+                            200: '#fecdd3',
+                            300: '#fda4af',
+                            400: '#fb7185',
+                            500: '#f43f5e',
+                            600: '#e11d48',
+                            700: '#be123c',
+                            800: '#9f1239',
+                            900: '#881337',
+                        }
+                    },
+                    fontFamily: {
+                        serif: ['"Noto Serif SC"', 'serif'],
+                        calligraphy: ['"Ma Shan Zheng"', 'cursive']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Noto Serif SC', serif;
+            background-color: #0b0914;
+            color: #f8fafc;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Ambient Glow & Floating FX */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .glass-card-light {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 10px 30px rgba(225, 29, 72, 0.15);
+        }
+
+        /* Photo Card 3D Flip */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .flip-card-inner {
+            transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-style: preserve-3d;
+        }
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+        .flip-card-front, .flip-card-back {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .flip-card-back {
+            transform: rotateY(180deg);
+        }
+
+        /* Typewriter Cursor */
+        .cursor-blink::after {
+            content: '|';
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(11, 9, 20, 0.8);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(244, 63, 94, 0.4);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(244, 63, 94, 0.7);
+        }
+
+        .polaroid-card {
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .polaroid-card:hover {
+            transform: translateY(-8px) scale(1.03) rotate(0deg) !important;
+            z-index: 30;
+            box-shadow: 0 20px 40px rgba(244, 63, 94, 0.25);
+        }
+    </style>
+</head>
+<body class="min-h-screen relative text-slate-100 selection:bg-romantic-500 selection:text-white">
+
+    <!-- Background Canvas for Hearts & Dust Particles -->
+    <canvas id="particleCanvas" class="fixed inset-0 pointer-events-none z-0 opacity-60"></canvas>
+
+    <!-- FLOATING CORNER LYRICS WIDGET (角落歌词) -->
+    <div id="lyricsContainer" class="fixed bottom-4 left-4 sm:bottom-6 sm:left-6 z-40 max-w-[280px] sm:max-w-sm pointer-events-none transition-all duration-500 opacity-0 transform translate-y-4">
+        <div class="glass-card px-4 py-3 rounded-2xl border border-romantic-500/30 shadow-xl backdrop-blur-xl flex flex-col space-y-1 text-left">
+            <div class="flex items-center gap-1.5 text-[10px] text-romantic-400 font-mono font-semibold tracking-wider uppercase">
+                <span class="inline-block w-2 h-2 rounded-full bg-romantic-500 animate-pulse"></span>
+                <span>歌词同步 · LYRICS</span>
+            </div>
+            <!-- Current Active Lyric Line -->
+            <p id="currentLyric" class="text-sm sm:text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-100 via-pink-200 to-amber-100 leading-snug drop-shadow-sm transition-all duration-300">
+                ~ 歌曲准备中 ~
+            </p>
+            <!-- Next Lyric Line Preview -->
+            <p id="nextLyric" class="text-[11px] text-slate-400/80 truncate font-light transition-all duration-300">
+                即刻开启属于我们的旋律
+            </p>
+        </div>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <main class="relative z-10 min-h-screen w-full flex flex-col items-center justify-center">
+
+        <!-- ==================== STEP 0: BLACK SCREEN INTRO ==================== -->
+        <section id="step0" class="fixed inset-0 z-40 bg-black flex flex-col items-center justify-center p-6 text-center transition-opacity duration-1000">
+            <div class="max-w-md w-full space-y-8">
+                <div class="min-h-[120px] flex items-center justify-center">
+                    <p id="typewriterText" class="text-2xl sm:text-3xl md:text-4xl font-calligraphy tracking-widest text-romantic-200 leading-relaxed cursor-blink"></p>
+                </div>
+
+                <div id="startBtnWrapper" class="opacity-0 transition-all duration-1000 transform translate-y-4">
+                    <button onclick="startMemoryJourney()" class="group relative inline-flex items-center justify-center px-8 py-3.5 text-lg font-medium tracking-wide text-white transition-all duration-300 ease-out bg-gradient-to-r from-romantic-600 to-rose-500 rounded-full shadow-lg shadow-romantic-600/40 hover:shadow-romantic-600/70 hover:scale-105 active:scale-95">
+                        <span class="mr-2"><i class="fa-solid fa-heart animate-pulse text-romantic-200"></i></span>
+                        开启回忆之旅
+                        <span class="ml-2 group-hover:translate-x-1 transition-transform"><i class="fa-solid fa-chevron-right text-sm"></i></span>
+                    </button>
+                    <p class="text-xs text-slate-500 mt-4 tracking-wider">建议开启声音以获得最佳体验 💕</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== STEP 1: MEMORY TIMELINE ==================== -->
+        <section id="step1" class="hidden min-h-screen w-full max-w-4xl px-4 py-16 flex-col items-center justify-start space-y-12 transition-all duration-700">
+            
+            <!-- Section Header -->
+            <div class="text-center space-y-3 pt-6">
+                <span class="px-3 py-1 rounded-full text-xs font-semibold tracking-widest uppercase bg-romantic-500/10 text-romantic-300 border border-romantic-500/20">
+                    CHAPTER 01 · 岁月的歌
+                </span>
+                <h1 class="text-3xl sm:text-4xl md:text-5xl font-calligraphy text-transparent bg-clip-text bg-gradient-to-r from-rose-200 via-romantic-200 to-amber-100">
+                    那些年，我们走过的风景
+                </h1>
+                <p class="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
+                    点击照片可以翻转查看背面隐藏的话哦 ✨
+                </p>
+            </div>
+
+            <!-- Timeline Items Container -->
+            <div class="w-full space-y-16 relative before:absolute before:inset-0 before:left-1/2 before:-translate-x-1/2 before:w-0.5 before:bg-gradient-to-b before:from-romantic-500/0 before:via-romantic-500/40 before:to-romantic-500/0">
+                
+                <!-- Timeline Item 1: 相遇 -->
+                <div class="relative flex flex-col md:flex-row items-center justify-between gap-8 group">
+                    <div class="w-full md:w-1/2 md:text-right space-y-2 order-2 md:order-1">
+                        <span class="text-xs text-romantic-400 font-mono tracking-wider" id="date1">2019.06.07</span>
+                        <h3 class="text-xl font-bold text-slate-100" id="title1">初次相遇 · 故事的开始</h3>
+                        <p class="text-sm text-slate-300 leading-relaxed font-light" id="desc1">
+                            还记得第一次见你的那天，人群中的你笑得特别温暖。那一刻我就在想，这个女孩会不会成为我生命中特别的人？
+                        </p>
+                    </div>
+                    
+                    <div class="z-10 flex items-center justify-center w-10 h-10 rounded-full bg-slate-900 border-2 border-romantic-500 shadow-lg shadow-romantic-500/50 order-1 md:order-2 shrink-0">
+                        <i class="fa-solid fa-sparkles text-romantic-400 text-sm"></i>
+                    </div>
+
+                    <div class="w-full md:w-1/2 order-3 perspective-1000">
+                        <div class="flip-card w-full h-64 cursor-pointer" onclick="this.classList.toggle('flipped')">
+                            <div class="flip-card-inner relative w-full h-full rounded-2xl shadow-xl">
+                                <!-- Front -->
+                                <div class="flip-card-front absolute inset-0 rounded-2xl overflow-hidden glass-card p-2 border border-white/10">
+                                    <img id="img1" src="https://1500067625.vod-qcloud.com/%E7%AC%AC%E4%B8%80%E6%AC%A1%E5%90%88%E5%BD%B1.png" alt="相遇" class="w-full h-full object-cover rounded-xl">
+                                    <div class="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-[10px] text-white px-2 py-1 rounded-md">
+                                        <i class="fa-solid fa-rotate text-romantic-300 mr-1"></i> 点击翻转
+                                    </div>
+                                </div>
+                                <!-- Back -->
+                                <div class="flip-card-back absolute inset-0 rounded-2xl p-6 glass-card border border-romantic-500/30 flex flex-col items-center justify-center text-center space-y-3 bg-slate-900/90">
+                                    <i class="fa-solid fa-quote-left text-romantic-400 text-2xl"></i>
+                                    <p class="text-sm italic text-slate-200" id="backDesc1">“微信里的人，终于站在了我的面前”</p>
+                                    <span class="text-xs text-romantic-300 font-calligraphy">—— 那天我的心里话</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline Item 2: 相爱 -->
+                <div class="relative flex flex-col md:flex-row-reverse items-center justify-between gap-8 group">
+                    <div class="w-full md:w-1/2 md:text-left space-y-2 order-2 md:order-1">
+                        <span class="text-xs text-romantic-400 font-mono tracking-wider" id="date2">2019.06.22</span>
+                        <h3 class="text-xl font-bold text-slate-100" id="title2">确立心意 · 双向奔赴</h3>
+                        <p class="text-sm text-slate-300 leading-relaxed font-light" id="desc2">
+                            这个地方，你应该也记得吧？
+                        </p>
+                    </div>
+
+                    <div class="z-10 flex items-center justify-center w-10 h-10 rounded-full bg-slate-900 border-2 border-romantic-500 shadow-lg shadow-romantic-500/50 order-1 md:order-2 shrink-0">
+                        <i class="fa-solid fa-heart text-romantic-400 text-sm"></i>
+                    </div>
+
+                    <div class="w-full md:w-1/2 order-3 perspective-1000">
+                        <div class="flip-card w-full h-64 cursor-pointer" onclick="this.classList.toggle('flipped')">
+                            <div class="flip-card-inner relative w-full h-full rounded-2xl shadow-xl">
+                                <div class="flip-card-front absolute inset-0 rounded-2xl overflow-hidden glass-card p-2 border border-white/10">
+                                    <img id="img2" src="https://1500067625.vod-qcloud.com/%E5%89%AA%E5%BD%B1.png" alt="相爱" class="w-full h-full object-cover rounded-xl">
+                                    <div class="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-[10px] text-white px-2 py-1 rounded-md">
+                                        <i class="fa-solid fa-rotate text-romantic-300 mr-1"></i> 点击翻转
+                                    </div>
+                                </div>
+                                <div class="flip-card-back absolute inset-0 rounded-2xl p-6 glass-card border border-romantic-500/30 flex flex-col items-center justify-center text-center space-y-3 bg-slate-900/90">
+                                    <i class="fa-solid fa-quote-left text-romantic-400 text-2xl"></i>
+                                    <p class="text-sm italic text-slate-200" id="backDesc2">“发生了妙不可言的事情”</p>
+                                    <span class="text-xs text-romantic-300 font-calligraphy">—— 甜蜜回忆</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline Item 3: 结婚 -->
+                <div class="relative flex flex-col md:flex-row items-center justify-between gap-8 group">
+                    <div class="w-full md:w-1/2 md:text-right space-y-2 order-2 md:order-1">
+                        <span class="text-xs text-romantic-400 font-mono tracking-wider" id="date3">2021.01.21</span>
+                        <h3 class="text-xl font-bold text-slate-100" id="title3">神圣誓言 · 步入婚姻</h3>
+                        <p class="text-sm text-slate-300 leading-relaxed font-light" id="desc3">
+                            爱情不是惊天动地，而是每天都有你。余生很长，请多指教，我的老婆。
+                        </p>
+                    </div>
+
+                    <div class="z-10 flex items-center justify-center w-10 h-10 rounded-full bg-slate-900 border-2 border-romantic-500 shadow-lg shadow-romantic-500/50 order-1 md:order-2 shrink-0">
+                        <i class="fa-solid fa-ring text-romantic-400 text-sm"></i>
+                    </div>
+
+                    <div class="w-full md:w-1/2 order-3 perspective-1000">
+                        <div class="flip-card w-full h-64 cursor-pointer" onclick="this.classList.toggle('flipped')">
+                            <div class="flip-card-inner relative w-full h-full rounded-2xl shadow-xl">
+                                <div class="flip-card-front absolute inset-0 rounded-2xl overflow-hidden glass-card p-2 border border-white/10">
+                                    <img id="img3" src="https://1500067625.vod-qcloud.com/%E7%BB%93%E5%A9%9A%E8%AF%81.png" alt="结婚" class="w-full h-full object-cover rounded-xl">
+                                    <div class="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-[10px] text-white px-2 py-1 rounded-md">
+                                        <i class="fa-solid fa-rotate text-romantic-300 mr-1"></i> 点击翻转
+                                    </div>
+                                </div>
+                                <div class="flip-card-back absolute inset-0 rounded-2xl p-6 glass-card border border-romantic-500/30 flex flex-col items-center justify-center text-center space-y-3 bg-slate-900/90">
+                                    <i class="fa-solid fa-quote-left text-romantic-400 text-2xl"></i>
+                                    <p class="text-sm italic text-slate-200" id="backDesc3">“执子之手，与子偕老。这不是一句誓言，是我一生的决心。”</p>
+                                    <span class="text-xs text-romantic-300 font-calligraphy">—— 婚礼现场</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline Item 4: 育儿/生命结晶 -->
+                <div class="relative flex flex-col md:flex-row-reverse items-center justify-between gap-8 group">
+                    <div class="w-full md:w-1/2 md:text-left space-y-2 order-2 md:order-1">
+                        <span class="text-xs text-romantic-400 font-mono tracking-wider" id="date4">2024.10.01</span>
+                        <h3 class="text-xl font-bold text-slate-100" id="title4">生命延续 · 三口之家</h3>
+                        <p class="text-sm text-slate-300 leading-relaxed font-light" id="desc4">
+                            那一天，我们迎来了人生中最珍贵的礼物，辛苦了，老婆。
+                        </p>
+                    </div>
+
+                    <div class="z-10 flex items-center justify-center w-10 h-10 rounded-full bg-slate-900 border-2 border-romantic-500 shadow-lg shadow-romantic-500/50 order-1 md:order-2 shrink-0">
+                        <i class="fa-solid fa-baby text-romantic-400 text-sm"></i>
+                    </div>
+
+                    <div class="w-full md:w-1/2 order-3 perspective-1000">
+                        <div class="flip-card w-full h-64 cursor-pointer" onclick="this.classList.toggle('flipped')">
+                            <div class="flip-card-inner relative w-full h-full rounded-2xl shadow-xl">
+                                <div class="flip-card-front absolute inset-0 rounded-2xl overflow-hidden glass-card p-2 border border-white/10">
+                                    <img id="img4" src="https://1500067625.vod-qcloud.com/%E5%87%BA%E7%94%9F.png" alt="结晶" class="w-full h-full object-cover rounded-xl">
+                                    <div class="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-[10px] text-white px-2 py-1 rounded-md">
+                                        <i class="fa-solid fa-rotate text-romantic-300 mr-1"></i> 点击翻转
+                                    </div>
+                                </div>
+                                <div class="flip-card-back absolute inset-0 rounded-2xl p-6 glass-card border border-romantic-500/30 flex flex-col items-center justify-center text-center space-y-3 bg-slate-900/90">
+                                    <i class="fa-solid fa-quote-left text-romantic-400 text-2xl"></i>
+                                    <p class="text-sm italic text-slate-200" id="backDesc4">“第一次抱起他的时候，我才真正明白，什么叫责任，什么叫幸福。”</p>
+                                    <span class="text-xs text-romantic-300 font-calligraphy">—— 一家三口</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ==================== DAILY MEMORIES PHOTO GALLERY ==================== -->
+            <div class="w-full pt-16 space-y-8 border-t border-white/10">
+                <div class="text-center space-y-2">
+                    <span class="px-3 py-1 rounded-full text-xs font-semibold tracking-widest uppercase bg-rose-500/10 text-rose-300 border border-rose-500/20">
+                        DAILY MOMENTS · 碎碎念与小确幸
+                    </span>
+                    <h2 class="text-2xl sm:text-3xl font-calligraphy text-transparent bg-clip-text bg-gradient-to-r from-pink-200 via-rose-200 to-amber-200">
+                        日常里的闪光瞬间
+                    </h2>
+                    <p class="text-xs text-slate-400 max-w-md mx-auto">
+                        比起那些波澜壮阔，我更爱和你度过的每一个平淡又温暖的日常 💕
+                    </p>
+                </div>
+
+                <!-- Daily Polaroid Photos Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
+                    
+                    <!-- Daily Photo 1: 后海 -->
+                    <div class="polaroid-card cursor-pointer perspective-1000 -rotate-1" onclick="this.querySelector('.flip-card').classList.toggle('flipped')">
+                        <div class="flip-card w-full h-80">
+                            <div class="flip-card-inner relative w-full h-full rounded-2xl shadow-xl">
+                                <div class="flip-card-front absolute inset-0 rounded-2xl glass-card p-3 border border-white/15 flex flex-col justify-between">
+                                    <div class="relative w-full h-56 rounded-xl overflow-hidden">
+                                        <img src="https://1500067625.vod-qcloud.com/%E5%90%8E%E6%B5%B7.png" alt="后海" class="w-full h-full object-cover">
+                                        <span class="absolute top-2 left-2 bg-black/60 backdrop-blur-md text-[10px] text-pink-300 px-2.5 py-1 rounded-full border border-pink-400/30">
+                                            🍳 后海
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center justify-between pt-2 px-1">
+                                        <span class="text-xs font-bold text-slate-200">逛街</span>
+                                        <span class="text-[10px] text-slate-400"><i class="fa-solid fa-rotate text-pink-400 mr-1"></i>翻看文字</span>
+                                    </div>
+                                </div>
+                                <div class="flip-card-back absolute inset-0 rounded-2xl p-6 glass-card border border-rose-400/30 flex flex-col items-center justify-center text-center space-y-3 bg-slate-900/95">
+                                    <i class="fa-solid fa-utensils text-rose-400 text-xl"></i>
+                                    <p class="text-xs italic text-slate-200 leading-relaxed">“还记得那会我们没事就去逛公园。”</p>
+                                    <span class="text-[10px] text-rose-300 font-mono">—— 除了逛公园好像还真不知道去哪</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Daily Photo 2: 798 -->
+                    <div class="polaroid-card cursor-pointer perspective-1000 rotate-2" onclick="this.querySelector('.flip-card').classList.toggle('flipped')">
+                        <div class="flip-card w-full h-80">
+                            <div class="flip-card-inner relative w-full h-full rounded-2xl shadow-xl">
+                                <div class="flip-card-front absolute inset-0 rounded-2xl glass-card p-3 border border-white/15 flex flex-col justify-between">
+                                    <div class="relative w-full h-56 rounded-xl overflow-hidden">
+                                        <img src="https://1500067625.vod-qcloud.com/798.png" alt="旅途" class="w-full h-full object-cover">
+                                        <span class="absolute top-2 left-2 bg-black/60 backdrop-blur-md text-[10px] text-amber-300 px-2.5 py-1 rounded-full border border-amber-400/30">
+                                            ✈️ 798
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center justify-between pt-2 px-1">
+                                        <span class="text-xs font-bold text-slate-200">还记得是你带我去的</span>
+                                        <span class="text-[10px] text-slate-400"><i class="fa-solid fa-rotate text-amber-400 mr-1"></i>翻看文字</span>
+                                    </div>
+                                </div>
+                                <div class="flip-card-back absolute inset-0 rounded-2xl p-6 glass-card border border-amber-400/30 flex flex-col items-center justify-center text-center space-y-3 bg-slate-900/95">
+                                    <i class="fa-solid fa-plane-departure text-amber-400 text-xl"></i>
+                                    <p class="text-xs italic text-slate-200 leading-relaxed">“老婆最美。”</p>
+                                    <span class="text-[10px] text-amber-300 font-mono">—— 约会记忆</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Daily Photo 3: 宅家 -->
+                    <div class="polaroid-card cursor-pointer perspective-1000 -rotate-2" onclick="this.querySelector('.flip-card').classList.toggle('flipped')">
+                        <div class="flip-card w-full h-80">
+                            <div class="flip-card-inner relative w-full h-full rounded-2xl shadow-xl">
+                                <div class="flip-card-front absolute inset-0 rounded-2xl glass-card p-3 border border-white/15 flex flex-col justify-between">
+                                    <div class="relative w-full h-56 rounded-xl overflow-hidden">
+                                        <img src="https://1500067625.vod-qcloud.com/%E5%AE%85%E5%AE%B6.png" alt="宅家" class="w-full h-full object-cover">
+                                        <span class="absolute top-2 left-2 bg-black/60 backdrop-blur-md text-[10px] text-purple-300 px-2.5 py-1 rounded-full border border-purple-400/30">
+                                            🛋️ 老婆陪加班
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center justify-between pt-2 px-1">
+                                        <span class="text-xs font-bold text-slate-200">加班中</span>
+                                        <span class="text-[10px] text-slate-400"><i class="fa-solid fa-rotate text-purple-400 mr-1"></i>翻看文字</span>
+                                    </div>
+                                </div>
+                                <div class="flip-card-back absolute inset-0 rounded-2xl p-6 glass-card border border-purple-400/30 flex flex-col items-center justify-center text-center space-y-3 bg-slate-900/95">
+                                    <i class="fa-solid fa-tv text-purple-400 text-xl"></i>
+                                    <p class="text-xs italic text-slate-200 leading-relaxed">“老婆陪加班 在累都不觉得累。”</p>
+                                    <span class="text-[10px] text-purple-300 font-mono">—— 美好时光</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Daily Photo 4: 手机搞怪抓拍 -->
+                    <div class="polaroid-card cursor-pointer perspective-1000 rotate-1" onclick="this.querySelector('.flip-card').classList.toggle('flipped')">
+                        <div class="flip-card w-full h-80">
+                            <div class="flip-card-inner relative w-full h-full rounded-2xl shadow-xl">
+                                <div class="flip-card-front absolute inset-0 rounded-2xl glass-card p-3 border border-white/15 flex flex-col justify-between">
+                                    <div class="relative w-full h-56 rounded-xl overflow-hidden">
+                                        <img src="https://1500067625.vod-qcloud.com/%E5%A7%94%E5%B1%88.png" alt="搞怪抓拍" class="w-full h-full object-cover">
+                                        <span class="absolute top-2 left-2 bg-black/60 backdrop-blur-md text-[10px] text-emerald-300 px-2.5 py-1 rounded-full border border-emerald-400/30">
+                                            🤪 委屈巴巴
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center justify-between pt-2 px-1">
+                                        <span class="text-xs font-bold text-slate-200">老婆感冒了</span>
+                                        <span class="text-[10px] text-slate-400"><i class="fa-solid fa-rotate text-emerald-400 mr-1"></i>翻看文字</span>
+                                    </div>
+                                </div>
+                                <div class="flip-card-back absolute inset-0 rounded-2xl p-6 glass-card border border-emerald-400/30 flex flex-col items-center justify-center text-center space-y-3 bg-slate-900/95">
+                                    <i class="fa-solid fa-face-laugh-wink text-emerald-400 text-xl"></i>
+                                    <p class="text-xs italic text-slate-200 leading-relaxed">“嘿嘿”</p>
+                                    <span class="text-[10px] text-emerald-300 font-mono">—— 专属黑历史</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Daily Photo 5: 节日仪式感 -->
+                    <div class="polaroid-card cursor-pointer perspective-1000 -rotate-1" onclick="this.querySelector('.flip-card').classList.toggle('flipped')">
+                        <div class="flip-card w-full h-80">
+                            <div class="flip-card-inner relative w-full h-full rounded-2xl shadow-xl">
+                                <div class="flip-card-front absolute inset-0 rounded-2xl glass-card p-3 border border-white/15 flex flex-col justify-between">
+                                    <div class="relative w-full h-56 rounded-xl overflow-hidden">
+                                        <img src="https://1500067625.vod-qcloud.com/%E8%82%9A%E5%AD%90%E5%A4%A7.png" alt="仪式感" class="w-full h-full object-cover">
+                                        <span class="absolute top-2 left-2 bg-black/60 backdrop-blur-md text-[10px] text-rose-300 px-2.5 py-1 rounded-full border border-rose-400/30">
+                                            🌸 老婆怀孕啦
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center justify-between pt-2 px-1">
+                                        <span class="text-xs font-bold text-slate-200">期待宝宝的出生</span>
+                                        <span class="text-[10px] text-slate-400"><i class="fa-solid fa-rotate text-rose-400 mr-1"></i>翻看文字</span>
+                                    </div>
+                                </div>
+                                <div class="flip-card-back absolute inset-0 rounded-2xl p-6 glass-card border border-rose-400/30 flex flex-col items-center justify-center text-center space-y-3 bg-slate-900/95">
+                                    <i class="fa-solid fa-gift text-rose-400 text-xl"></i>
+                                    <p class="text-xs italic text-slate-200 leading-relaxed">“比比谁肚子大。”</p>
+                                    <span class="text-[10px] text-rose-300 font-mono">—— 好像是我赢了</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Daily Photo 6: 一起带娃 -->
+                    <div class="polaroid-card cursor-pointer perspective-1000 rotate-2" onclick="this.querySelector('.flip-card').classList.toggle('flipped')">
+                        <div class="flip-card w-full h-80">
+                            <div class="flip-card-inner relative w-full h-full rounded-2xl shadow-xl">
+                                <div class="flip-card-front absolute inset-0 rounded-2xl glass-card p-3 border border-white/15 flex flex-col justify-between">
+                                    <div class="relative w-full h-56 rounded-xl overflow-hidden">
+                                        <img src="https://1500067625.vod-qcloud.com/%E5%B8%A6%E5%A8%83.png" alt="陪娃日常" class="w-full h-full object-cover">
+                                        <span class="absolute top-2 left-2 bg-black/60 backdrop-blur-md text-[10px] text-cyan-300 px-2.5 py-1 rounded-full border border-cyan-400/30">
+                                            🍼 日常带娃
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center justify-between pt-2 px-1">
+                                        <span class="text-xs font-bold text-slate-200">带娃玩耍中</span>
+                                        <span class="text-[10px] text-slate-400"><i class="fa-solid fa-rotate text-cyan-400 mr-1"></i>翻看文字</span>
+                                    </div>
+                                </div>
+                                <div class="flip-card-back absolute inset-0 rounded-2xl p-6 glass-card border border-cyan-400/30 flex flex-col items-center justify-center text-center space-y-3 bg-slate-900/95">
+                                    <i class="fa-solid fa-heart-pulse text-cyan-400 text-xl"></i>
+                                    <p class="text-xs italic text-slate-200 leading-relaxed">“看着你抱着宝宝玩耍，心里突然被幸福塞得满满当当。”</p>
+                                    <span class="text-[10px] text-cyan-300 font-mono">—— 温馨日常</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Next Button -->
+            <div class="pt-8 text-center">
+                <button onclick="goToStep(2)" class="px-8 py-3.5 text-base font-medium text-white bg-gradient-to-r from-romantic-600 to-rose-500 rounded-full shadow-lg shadow-romantic-600/30 hover:shadow-romantic-600/50 hover:scale-105 active:scale-95 transition-all">
+                    进入默契小问答 <i class="fa-solid fa-gamepad ml-2"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- ==================== STEP 2: INTERACTIVE QUIZ ==================== -->
+        <section id="step2" class="hidden min-h-screen w-full max-w-2xl px-4 py-16 flex flex-col items-center justify-center space-y-8 transition-all duration-700">
+            
+            <div class="text-center space-y-3">
+                <span class="px-3 py-1 rounded-full text-xs font-semibold tracking-widest uppercase bg-romantic-500/10 text-romantic-300 border border-romantic-500/20">
+                    CHAPTER 02 · 默契考场
+                </span>
+                <h2 class="text-3xl sm:text-4xl font-calligraphy text-slate-100">
+                    求生欲与甜蜜小测试
+                </h2>
+                <p class="text-xs text-slate-400">凭直觉选选看，答错可是有“甜蜜惩罚”的哦！</p>
+            </div>
+
+            <!-- Quiz Card Box -->
+            <div id="quizCard" class="w-full glass-card rounded-3xl p-6 sm:p-8 space-y-6 relative border border-white/10 shadow-2xl">
+                <!-- Progress Bar -->
+                <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                    <div id="quizProgress" class="bg-gradient-to-r from-romantic-500 to-rose-400 h-full w-1/3 transition-all duration-500"></div>
+                </div>
+
+                <!-- Question Header -->
+                <div class="space-y-2">
+                    <span id="quizBadge" class="text-xs font-semibold text-romantic-400">第 1 / 3 题</span>
+                    <h3 id="quizQuestion" class="text-lg sm:text-xl font-bold text-slate-100">
+                        还记得，我们第一次见面是在哪里吗？
+                    </h3>
+                </div>
+
+                <!-- Options Grid -->
+                <div id="quizOptions" class="grid grid-cols-1 gap-3">
+                    <!-- Options populated via JS -->
+                </div>
+            </div>
+
+            <!-- Quiz Feedback Modal Popup -->
+            <div id="quizModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4">
+                <div class="glass-card-light text-slate-900 rounded-3xl p-6 max-w-sm w-full text-center space-y-4 border border-white shadow-2xl animate-bounce-short">
+                    <div class="w-16 h-16 rounded-full bg-rose-100 text-rose-500 flex items-center justify-center mx-auto text-2xl">
+                        <i id="modalIcon" class="fa-solid fa-heart"></i>
+                    </div>
+                    <h4 id="modalTitle" class="text-xl font-bold text-slate-900">回答正确！</h4>
+                    <p id="modalMsg" class="text-sm text-slate-600 leading-relaxed">
+                        答对啦。那一天，北京南站人很多，但我一眼就看见了你。
+                    </p>
+                    <button onclick="closeQuizModal()" class="w-full py-2.5 bg-romantic-600 hover:bg-romantic-700 text-white font-medium rounded-xl transition-colors shadow-md">
+                        继续下一题 💕
+                    </button>
+                </div>
+            </div>
+
+            <div class="pt-4">
+                <button id="skipQuizBtn" onclick="goToStep(3)" class="text-xs text-slate-500 hover:text-romantic-300 underline">
+                    跳过问答，直接看给老婆的信 <i class="fa-solid fa-arrow-right ml-1"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- ==================== STEP 3: LOVE LETTER & COUPONS ==================== -->
+        <section id="step3" class="hidden min-h-screen w-full max-w-3xl px-4 py-16 flex flex-col items-center justify-center space-y-12 transition-all duration-700">
+            
+            <div class="text-center space-y-3">
+                <span class="px-3 py-1 rounded-full text-xs font-semibold tracking-widest uppercase bg-romantic-500/10 text-romantic-300 border border-romantic-500/20">
+                    CHAPTER 03 · 告白终章
+                </span>
+                <h2 class="text-3xl sm:text-4xl font-calligraphy text-slate-100">
+                    致我最爱的老婆
+                </h2>
+            </div>
+
+            <!-- Interactive Envelope -->
+            <div id="envelopeContainer" class="w-full max-w-md cursor-pointer group" onclick="openEnvelope()">
+                <div class="glass-card rounded-3xl p-8 text-center space-y-6 border border-romantic-500/30 hover:border-romantic-500/60 transition-all transform group-hover:-translate-y-1 shadow-2xl">
+                    <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-romantic-600 to-rose-400 mx-auto flex items-center justify-center text-3xl text-white shadow-lg shadow-romantic-500/40 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-envelope-open-text"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-200">一封写给你的亲笔信</h3>
+                        <p class="text-xs text-slate-400 mt-1">点击解封这份专属温柔 💌</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Letter Content Box (Hidden initially) -->
+            <div id="letterBox" class="hidden w-full glass-card rounded-3xl p-6 sm:p-10 space-y-6 border border-rose-200/20 bg-slate-900/90 shadow-2xl text-slate-200">
+                <div class="border-b border-white/10 pb-4 flex justify-between items-center">
+                    <span class="text-xs font-mono text-romantic-300"><i class="fa-solid fa-pen-nib mr-2"></i>七夕见字如面</span>
+                    <span class="text-xs text-slate-400">爱你的老公</span>
+                </div>
+
+                <div id="letterBody" class="prose prose-invert prose-rose max-w-none text-sm sm:text-base leading-relaxed space-y-4 font-light text-slate-300">
+                    <!-- Letter text inserted here -->
+                </div>
+
+                <div class="pt-6 border-t border-white/10 text-right">
+                    <p class="font-calligraphy text-2xl text-romantic-300" id="letterSign">爱你的老公 亲笔</p>
+                    <p class="text-xs text-slate-500 mt-1 font-mono" id="letterDate">七夕之夜 · 谨记</p>
+                </div>
+            </div>
+
+            <!-- Love Coupons Section -->
+            <div id="couponSection" class="hidden w-full space-y-6 text-center pt-8">
+                <div class="space-y-2">
+                    <h3 class="text-2xl font-calligraphy text-romantic-200">七夕专属·老婆特权兑换券</h3>
+                    <p class="text-xs text-slate-400">点击卡片即可即时“兑换/使用”哦（终身有效，不可撤销）！</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <!-- Coupon 1 -->
+                    <div onclick="claimCoupon(this, '无条件原谅券')" class="glass-card rounded-2xl p-5 border border-amber-400/30 hover:border-amber-400 cursor-pointer transition-all hover:scale-105 group relative overflow-hidden">
+                        <div class="text-amber-400 text-2xl mb-2"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                        <h4 class="font-bold text-slate-200 text-sm">无条件原谅券</h4>
+                        <p class="text-[11px] text-slate-400 mt-1">老公惹你生气时出示，无条件道歉并拥抱！</p>
+                        <span class="coupon-status text-[10px] bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full inline-block mt-3">点击领取</span>
+                    </div>
+
+                    <!-- Coupon 2 -->
+                    <div onclick="claimCoupon(this, '周末带娃放假券')" class="glass-card rounded-2xl p-5 border border-rose-400/30 hover:border-rose-400 cursor-pointer transition-all hover:scale-105 group relative overflow-hidden">
+                        <div class="text-rose-400 text-2xl mb-2"><i class="fa-solid fa-mug-hot"></i></div>
+                        <h4 class="font-bold text-slate-200 text-sm">带娃休假全包券</h4>
+                        <p class="text-[11px] text-slate-400 mt-1">老公全天全职带娃，老婆自由去逛街做SPA！</p>
+                        <span class="coupon-status text-[10px] bg-rose-400/20 text-rose-300 px-2 py-0.5 rounded-full inline-block mt-3">点击领取</span>
+                    </div>
+
+                    <!-- Coupon 3 -->
+                    <div onclick="claimCoupon(this, '深夜清空购物车券')" class="glass-card rounded-2xl p-5 border border-purple-400/30 hover:border-purple-400 cursor-pointer transition-all hover:scale-105 group relative overflow-hidden">
+                        <div class="text-purple-400 text-2xl mb-2"><i class="fa-solid fa-gift"></i></div>
+                        <h4 class="font-bold text-slate-200 text-sm">心愿清空券</h4>
+                        <p class="text-[11px] text-slate-400 mt-1">帮老婆买下心仪已久的好物，无预算上限！</p>
+                        <span class="coupon-status text-[10px] bg-purple-400/20 text-purple-300 px-2 py-0.5 rounded-full inline-block mt-3">点击领取</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Message -->
+            <div id="finalFooter" class="hidden text-center text-xs text-slate-500 pt-12">
+                <p>愿我们岁岁年年，共度每一个七夕 ❤️</p>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- 内嵌背景音乐 -->
+    <audio id="bgmAudio" src="https://1500067625.vod-qcloud.com/%E8%B0%A2%E8%B0%A2%E4%BD%A0%E8%BF%98%E5%9C%A8%E6%88%91%E8%BA%AB%E6%97%81-%E9%B2%81%E9%97%AF%E6%9C%80%E7%BB%88%E7%89%88.mp3" loop preload="auto"></audio>
+
+    <script>
+        /* ==================== GLOBAL STATE & CONFIG ==================== */
+        const state = {
+            isPlayingAudio: false,
+            audioCtx: null,
+            wifeName: "老婆",
+            husbandName: "老公",
+            currentStep: 0,
+            quizIndex: 0,
+            quizScore: 0,
+            lyrics: [],
+            currentLyricIdx: -1,
+            synthMockTime: 0
+        };
+
+        // 带时间轴歌词
+        const userLrcText = `[00:01.61]谢谢你还在我身旁-鲁闯
+[00:04.83]
+[00:06.27]作词：鲁闯
+[00:07.71]作曲：鲁闯
+[00:09.17]编曲：鲁闯
+[00:09.68]混音：鲁闯
+[00:10.07]原唱：鲁闯
+[00:10.52]
+[00:11.07]
+[00:13.39]还记得第一次牵你的手
+[00:17.03]风吹乱了你额前的温柔
+[00:20.87]那时候我们都很年轻
+[00:24.29]相信未来就在路的尽头
+[00:26.72]
+[00:28.10]后来日子越走越匆忙
+[00:31.09]柴米油盐写满了时光
+[00:35.07]你把最好的青春
+[00:37.93]都放进了这个家的日常
+[00:41.45]
+[00:42.02]我知道你也会累
+[00:45.35]也偷偷流过眼泪
+[00:49.00]可每一次回头
+[00:50.89]你都还站在我身边
+[00:54.33]
+[00:55.73]谢谢你还在我的身旁
+[00:59.43]陪我走过每一段风浪
+[01:02.87]从年少轻狂到满身风霜
+[01:06.89]你始终是我的方向
+[01:09.28]
+[01:10.06]谢谢你把平凡的日子
+[01:13.27]过成了我最温暖的诗
+[01:17.25]如果岁月终会带走青春
+[01:20.46]至少还有你陪我一生
+[01:39.30]
+[01:41.02]如今孩子慢慢长大了
+[01:43.75]家里也多了欢笑和牵挂
+[01:47.38]有时候忘了说一句爱你
+[01:50.69]却把想念藏进每一次回家
+[01:54.28]
+[01:54.91]我不是最浪漫的人
+[01:58.03]也说不出太漂亮的话
+[02:01.58]可我的未来每一天
+[02:05.10]都想和你一起慢慢走啊
+[02:08.37]
+[02:09.20]等我们头发都白了
+[02:12.13]还一起散步看晚霞
+[02:16.18]如果有人问幸福是什么
+[02:19.49]我会笑着牵起你的手回答
+[02:23.07]
+[02:23.33]谢谢你还在我的身旁
+[02:26.57]让我的世界一直有光
+[02:30.06]这一生最大的幸运
+[02:34.12]不是遇见多少风景
+[02:37.51]
+[02:38.05]而是遇见你
+[02:43.44]然后我们成为了家
+[02:49.34]`;
+
+        // Letter text content
+        const letterTextContent = [
+            "亲爱的老婆：",
+            "当我坐下来写这封信的时候，我突然发现，我们已经一起走过了这么多年。",
+            "从2019年到现在，时间过得真的很快。",
+            "还记得第一次和你聊天的时候，我们只是微信里两个陌生人。那时候的我，在海上漂着，每天面对的是一望无际的大海，从来没有想过，手机另一端的那个女孩，会成为我这一生最重要的人。",
+            "后来，我坐上了去北京的高铁。",
+            "北京南站，人来人往，而我一眼就看到了你。",
+            "我们的第一顿饭，不是什么浪漫的西餐，也没有精心准备的惊喜，只是在北京南站吃了一顿肯德基。可直到今天，我还是觉得，那是我吃过最幸福的一顿饭。",
+            "那三天，我们一起走过北京的大街小巷，一起聊天，一起笑。等我坐上返程的高铁时，我知道，我一定还会回来，因为北京有了一个让我牵挂的人。",
+            "后来，我又一次去见你。",
+            "后来，我们牵了手，拥抱了彼此，也一起规划着未来。",
+            "再后来，你放下了熟悉的北京，跟着我来到济南，开始一段全新的生活。而我，也辞掉了船员的工作，结束了漂泊。",
+            "很多人问我，为什么愿意放弃以前的工作。",
+            "其实答案很简单。",
+            "因为以前，我努力工作，是为了生活；后来，我努力工作，是为了我们的家。",
+            "谢谢你，愿意相信我，愿意陪着我，从一无所有开始，一起布置我们的小家，一起面对生活里的压力，一起熬过那些并不轻松的日子。",
+            "谢谢你，在我迷茫的时候鼓励我，在我累的时候陪着我，在我开心的时候和我一起分享快乐。",
+            "后来，我们结婚了。",
+            "那一天，我们交换的不只是一枚戒指，更是对未来一辈子的承诺。",
+            "再后来，我们迎来了宝宝。",
+            "第一次抱着他的时候，我忽然觉得，原来幸福真的可以抱在怀里。",
+            "看着你从女孩变成妻子，又从妻子变成妈妈，我知道，这一路你付出了太多太多。谢谢你经历了怀孕的辛苦，承受了生产的疼痛，也谢谢你把那么多时间和爱，都给了我们的孩子，给了这个家。",
+            "这些年，我可能不是一个满分的丈夫，也不是一个完美的爸爸。我会因为工作忙碌而忽略你，会因为生活的压力偶尔情绪不好，也会有很多做得不够好的地方。",
+            "谢谢你一直包容我、理解我，也一直陪着我成长。",
+            "如果有人问我，这几年最大的收获是什么。",
+            "我不会说是事业，不会说是房子，也不会说是别的。",
+            "我会告诉他，我最大的幸运，就是遇见了你。",
+            "是你，让一个曾经漂泊在海上的人，有了每天都想回去的地方。",
+            "是你，让“家”这个字，有了真正的意义。",
+            "未来的路还很长。",
+            "也许我们还会遇到很多困难，也会一起慢慢变老，脸上会多出皱纹，头发会慢慢变白，孩子也会长大，离开我们的怀抱。",
+            "但我希望，无论多少年以后，当我们再翻开今天的照片、再看到这封信的时候，我们都会笑着说一句：",
+            "“原来，我们已经一起走了这么远。”",
+            "老婆，谢谢你。七夕快乐..."
+        ];
+
+        // Quiz Questions Data (已按要求修改前两题)
+        const quizData = [
+            {
+                badge: "第 1 / 3 题 · 甜蜜忆往",
+                q: "你还记得，我们第一次见面是在哪里吗？",
+                options: [
+                    { text: "北京南站", correct: true, msg: "答对啦。那一天，北京南站人很多，但我一眼就看见了你。" },
+                    { text: "济南西站", correct: false, msg: "再想想 ❤️" },
+                    { text: "天安门", correct: false, msg: "再想想 ❤️" },
+                    { text: "微信视频", correct: false, msg: "再想想 ❤️" }
+                ]
+            },
+            {
+                badge: "第 2 / 3 题 · 坚定选择",
+                q: "如果时间回到2019年，你还会选择认识我吗？",
+                options: [
+                    { text: "会", correct: true, msg: "我也是。" },
+                    { text: "一定会", correct: true, msg: "我也是。" },
+                    { text: "毫不犹豫", correct: true, msg: "我也是。" },
+                    { text: "重新认识一万次", correct: true, msg: "我也是。" }
+                ]
+            },
+            {
+                badge: "第 3 / 3 题 · 真情告白",
+                q: "在这个七夕，老婆今天最想听到老公说什么？",
+                options: [
+                    { text: "A. “老婆，你辛苦了，我爱你！”", correct: true, msg: "老婆辛苦了！我爱你，远胜于语言所能表达。" },
+                    { text: "B. “今晚娃我来带，你去好好休息！”", correct: true, msg: "没问题！ tonight 我是全职带娃保姆，老婆安心睡美觉！" },
+                    { text: "C. 以上所有，全部都要！", correct: true, msg: "必须全部安排！老婆的要求就是最高的旨意！" }
+                ]
+            }
+        ];
+
+        /* ==================== INITIALIZATION ==================== */
+        window.addEventListener('DOMContentLoaded', () => {
+            initCanvas();
+            startTypewriter();
+            setupAudioEvents();
+            parseAndSetLyrics(userLrcText);
+        });
+
+        /* ==================== TYPEWRITER EFFECT ==================== */
+        function startTypewriter() {
+            const typewriterEl = document.getElementById('typewriterText');
+            const btnWrapper = document.getElementById('startBtnWrapper');
+            const textToType = `老婆，七夕快乐 💕\n欢迎来到属于我们的专属时光机...`;
+            let index = 0;
+
+            if (!typewriterEl) return;
+            typewriterEl.innerText = '';
+            
+            const timer = setInterval(() => {
+                if (index < textToType.length) {
+                    const char = textToType.charAt(index);
+                    if (char === '\n') {
+                        typewriterEl.innerHTML += '<br/>';
+                    } else {
+                        typewriterEl.innerHTML += char;
+                    }
+                    index++;
+                } else {
+                    clearInterval(timer);
+                    if (btnWrapper) {
+                        btnWrapper.classList.remove('opacity-0', 'translate-y-4');
+                    }
+                }
+            }, 120);
+        }
+
+        /* ==================== NAVIGATION & STEP TRANSITIONS ==================== */
+        function startMemoryJourney() {
+            playAudio();
+            
+            const step0 = document.getElementById('step0');
+            if (step0) {
+                step0.classList.add('opacity-0');
+                setTimeout(() => {
+                    step0.classList.add('hidden');
+                    goToStep(1);
+                }, 800);
+            }
+        }
+
+        function goToStep(stepNum) {
+            state.currentStep = stepNum;
+
+            const step1 = document.getElementById('step1');
+            const step2 = document.getElementById('step2');
+            const step3 = document.getElementById('step3');
+
+            [step1, step2, step3].forEach(el => {
+                if (el) {
+                    el.classList.add('hidden');
+                    el.classList.remove('flex');
+                }
+            });
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            if (stepNum === 1 && step1) {
+                step1.classList.remove('hidden');
+                step1.classList.add('flex');
+            } else if (stepNum === 2 && step2) {
+                step2.classList.remove('hidden');
+                step2.classList.add('flex');
+                state.quizIndex = 0;
+                renderQuiz(0);
+            } else if (stepNum === 3 && step3) {
+                step3.classList.remove('hidden');
+                step3.classList.add('flex');
+            }
+        }
+
+        /* ==================== QUIZ SYSTEM ==================== */
+        function renderQuiz(index) {
+            if (index >= quizData.length) {
+                goToStep(3);
+                return;
+            }
+
+            const qData = quizData[index];
+            const badgeEl = document.getElementById('quizBadge');
+            const questionEl = document.getElementById('quizQuestion');
+            const progressEl = document.getElementById('quizProgress');
+            const optionsContainer = document.getElementById('quizOptions');
+
+            if (badgeEl) badgeEl.innerText = qData.badge;
+            if (questionEl) questionEl.innerText = qData.q;
+            if (progressEl) {
+                const progressPct = ((index + 1) / quizData.length) * 100;
+                progressEl.style.width = `${progressPct}%`;
+            }
+
+            if (optionsContainer) {
+                optionsContainer.innerHTML = '';
+                qData.options.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = 'w-full text-left p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-romantic-400/50 transition-all duration-300 text-sm font-medium text-slate-200 flex items-center justify-between group';
+                    btn.innerHTML = `
+                        <span>${opt.text}</span>
+                        <i class="fa-solid fa-chevron-right text-xs opacity-0 group-hover:opacity-100 transition-opacity text-romantic-400"></i>
+                    `;
+                    btn.onclick = () => handleQuizAnswer(opt.correct, opt.msg);
+                    optionsContainer.appendChild(btn);
+                });
+            }
+        }
+
+        function handleQuizAnswer(isCorrect, msg) {
+            const modal = document.getElementById('quizModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalMsg = document.getElementById('modalMsg');
+            const modalIcon = document.getElementById('modalIcon');
+
+            if (isCorrect) {
+                if (modalTitle) modalTitle.innerText = "答对了！ 💕";
+                if (modalIcon) modalIcon.className = "fa-solid fa-heart text-romantic-500 animate-pulse";
+            } else {
+                if (modalTitle) modalTitle.innerText = "答错啦 ~";
+                if (modalIcon) modalIcon.className = "fa-solid fa-face-rolling-eyes text-amber-500 animate-bounce";
+            }
+
+            if (modalMsg) modalMsg.innerText = msg;
+
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+            if (isCorrect) {
+                triggerConfetti();
+            }
+        }
+
+        function closeQuizModal() {
+            const modal = document.getElementById('quizModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+
+            // 获取当前问题的答题结果状态（如第一题答错留在本题，答对或第二、三题则前进）
+            const currentQ = quizData[state.quizIndex];
+            const modalTitleText = document.getElementById('modalTitle')?.innerText || "";
+            
+            if (modalTitleText.includes("答错啦") && state.quizIndex === 0) {
+                // 第一题答错不推进，让用户重新选择
+                return;
+            }
+
+            state.quizIndex++;
+            if (state.quizIndex < quizData.length) {
+                renderQuiz(state.quizIndex);
+            } else {
+                goToStep(3);
+            }
+        }
+
+        /* ==================== ENVELOPE & LETTER ==================== */
+        function openEnvelope() {
+            const container = document.getElementById('envelopeContainer');
+            const letterBox = document.getElementById('letterBox');
+            const letterBody = document.getElementById('letterBody');
+            const couponSection = document.getElementById('couponSection');
+            const finalFooter = document.getElementById('finalFooter');
+
+            if (container) container.classList.add('hidden');
+            if (letterBox) letterBox.classList.remove('hidden');
+            if (couponSection) couponSection.classList.remove('hidden');
+            if (finalFooter) finalFooter.classList.remove('hidden');
+
+            if (letterBody) {
+                letterBody.innerHTML = '';
+                letterTextContent.forEach((para, idx) => {
+                    let formatted = para.replace(/老婆/g, state.wifeName).replace(/老公/g, state.husbandName);
+                    const p = document.createElement('p');
+                    p.className = 'transition-all duration-700 opacity-0 transform translate-y-2';
+                    p.innerText = formatted;
+                    letterBody.appendChild(p);
+
+                    setTimeout(() => {
+                        p.classList.remove('opacity-0', 'translate-y-2');
+                    }, idx * 400);
+                });
+            }
+
+            triggerConfetti();
+        }
+
+        /* ==================== LYRICS ENGINE ==================== */
+        function parseAndSetLyrics(lrcString) {
+            const lines = lrcString.split('\n');
+            const timeRegex = /\[(\d{2}):(\d{2})(?:\.(\d{2,3}))?\]/;
+            const parsed = [];
+
+            lines.forEach(line => {
+                const match = timeRegex.exec(line);
+                if (match) {
+                    const minutes = parseInt(match[1], 10);
+                    const seconds = parseInt(match[2], 10);
+                    const millis = match[3] ? parseInt(match[3].padEnd(3, '0').substring(0, 3), 10) : 0;
+                    const timeInSeconds = minutes * 60 + seconds + millis / 1000;
+                    const text = line.replace(timeRegex, '').trim();
+
+                    if (text) {
+                        parsed.push({ time: timeInSeconds, text: text });
+                    }
+                }
+            });
+
+            parsed.sort((a, b) => a.time - b.time);
+            state.lyrics = parsed;
+            state.currentLyricIdx = -1;
+        }
+
+        function updateLyricsDisplay(currentTime) {
+            if (!state.lyrics || state.lyrics.length === 0) return;
+
+            let activeIdx = -1;
+            for (let i = 0; i < state.lyrics.length; i++) {
+                if (currentTime >= state.lyrics[i].time) {
+                    activeIdx = i;
+                } else {
+                    break;
+                }
+            }
+
+            if (activeIdx !== state.currentLyricIdx) {
+                state.currentLyricIdx = activeIdx;
+                const container = document.getElementById('lyricsContainer');
+                const currEl = document.getElementById('currentLyric');
+                const nextEl = document.getElementById('nextLyric');
+
+                if (activeIdx >= 0) {
+                    container.classList.remove('opacity-0', 'translate-y-4');
+                    container.classList.add('opacity-100', 'translate-y-0');
+
+                    currEl.style.opacity = '0';
+                    currEl.style.transform = 'translateY(-4px)';
+
+                    setTimeout(() => {
+                        currEl.innerText = state.lyrics[activeIdx].text;
+                        currEl.style.opacity = '1';
+                        currEl.style.transform = 'translateY(0)';
+
+                        if (activeIdx + 1 < state.lyrics.length) {
+                            nextEl.innerText = "下一句: " + state.lyrics[activeIdx + 1].text;
+                        } else {
+                            nextEl.innerText = "💕 全曲完";
+                        }
+                    }, 150);
+                }
+            }
+        }
+
+        /* ==================== AUDIO ENGINE ==================== */
+        function setupAudioEvents() {
+            const audio = document.getElementById('bgmAudio');
+            
+            audio.addEventListener('play', () => {
+                state.isPlayingAudio = true;
+            });
+            audio.addEventListener('pause', () => {
+                state.isPlayingAudio = false;
+            });
+            audio.addEventListener('timeupdate', () => {
+                updateLyricsDisplay(audio.currentTime);
+            });
+        }
+
+        function playAudio() {
+            const audio = document.getElementById('bgmAudio');
+            if (audio.src) {
+                audio.play().catch(e => {
+                    console.log("Audio play failed, playing web audio fallback", e);
+                    playSynthesizedChords();
+                });
+            } else {
+                playSynthesizedChords();
+            }
+        }
+
+        function playSynthesizedChords() {
+            if (!state.audioCtx) {
+                state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (state.audioCtx.state === 'suspended') {
+                state.audioCtx.resume();
+            }
+
+            state.isPlayingAudio = true;
+
+            const chords = [
+                [261.63, 329.63, 392.00, 493.88],
+                [220.00, 261.63, 329.63, 392.00],
+                [174.61, 220.00, 261.63, 329.63],
+                [196.00, 246.94, 293.66, 349.23]
+            ];
+
+            let chordIdx = 0;
+            
+            function triggerChord() {
+                if (!state.isPlayingAudio) return;
+                const now = state.audioCtx.currentTime;
+                const currentNotes = chords[chordIdx];
+                
+                currentNotes.forEach(freq => {
+                    const osc = state.audioCtx.createOscillator();
+                    const gain = state.audioCtx.createGain();
+                    
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now);
+                    
+                    gain.gain.setValueAtTime(0.001, now);
+                    gain.gain.linearRampToValueAtTime(0.04, now + 0.3);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.8);
+                    
+                    osc.connect(gain);
+                    gain.connect(state.audioCtx.destination);
+                    
+                    osc.start(now);
+                    osc.stop(now + 3.0);
+                });
+
+                chordIdx = (chordIdx + 1) % chords.length;
+            }
+
+            if (state.synthInterval) clearInterval(state.synthInterval);
+            triggerChord();
+            state.synthInterval = setInterval(triggerChord, 2800);
+
+            if (state.synthLyricInterval) clearInterval(state.synthLyricInterval);
+            state.synthMockTime = 0;
+            state.synthLyricInterval = setInterval(() => {
+                if (state.isPlayingAudio) {
+                    state.synthMockTime += 0.5;
+                    updateLyricsDisplay(state.synthMockTime);
+                }
+            }, 500);
+        }
+
+        function claimCoupon(cardEl, couponName) {
+            const statusTag = cardEl.querySelector('.coupon-status');
+            if (statusTag.innerText === "已兑换") return;
+
+            statusTag.innerText = "已兑换成功 🎉";
+            statusTag.className = "coupon-status text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full inline-block mt-3 font-semibold";
+            cardEl.classList.add('ring-2', 'ring-emerald-400');
+            
+            triggerConfetti();
+        }
+
+        /* ==================== PARTICLE FX ==================== */
+        function initCanvas() {
+            const canvas = document.getElementById('particleCanvas');
+            const ctx = canvas.getContext('2d');
+
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resize();
+            window.addEventListener('resize', resize);
+
+            const particles = [];
+            const particleCount = 35;
+
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 12 + 6,
+                    speedY: Math.random() * 0.8 + 0.2,
+                    speedX: (Math.random() - 0.5) * 0.4,
+                    opacity: Math.random() * 0.5 + 0.2,
+                    isHeart: Math.random() > 0.4
+                });
+            }
+
+            function drawHeart(x, y, size, opacity) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.fillStyle = `rgba(244, 63, 94, ${opacity})`;
+                const topCurveHeight = size * 0.3;
+                ctx.moveTo(x, y + topCurveHeight);
+                ctx.bezierCurveTo(x, y, x - size / 2, y, x - size / 2, y + topCurveHeight);
+                ctx.bezierCurveTo(x - size / 2, y + (size + topCurveHeight) / 2, x, y + size, x, y + size);
+                ctx.bezierCurveTo(x, y + (size + topCurveHeight) / 2, x + size / 2, y + topCurveHeight, x + size / 2, y + topCurveHeight);
+                ctx.bezierCurveTo(x + size / 2, y, x, y, x, y + topCurveHeight);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                particles.forEach(p => {
+                    p.y -= p.speedY;
+                    p.x += p.speedX;
+
+                    if (p.y < -20) {
+                        p.y = canvas.height + 20;
+                        p.x = Math.random() * canvas.width;
+                    }
+
+                    if (p.isHeart) {
+                        drawHeart(p.x, p.y, p.size, p.opacity);
+                    } else {
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.size / 4, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(253, 164, 175, ${p.opacity})`;
+                        ctx.fill();
+                    }
+                });
+
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        // Burst Confetti FX
+        function triggerConfetti() {
+            const colors = ['#f43f5e', '#fda4af', '#fb7185', '#fef08a', '#ffffff'];
+            for (let i = 0; i < 30; i++) {
+                const conf = document.createElement('div');
+                conf.className = 'fixed z-50 pointer-events-none rounded-full';
+                const size = Math.random() * 8 + 4;
+                conf.style.width = `${size}px`;
+                conf.style.height = `${size}px`;
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                conf.style.left = `${window.innerWidth / 2}px`;
+                conf.style.top = `${window.innerHeight / 2}px`;
+                
+                document.body.appendChild(conf);
+
+                const angle = Math.random() * Math.PI * 2;
+                const velocity = Math.random() * 180 + 60;
+                const tx = Math.cos(angle) * velocity;
+                const ty = Math.sin(angle) * velocity - 100;
+
+                conf.animate([
+                    { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+                    { transform: `translate(${tx}px, ${ty}px) scale(0)`, opacity: 0 }
+                ], {
+                    duration: 1200 + Math.random() * 500,
+                    easing: 'cubic-bezier(0.25, 1, 0.5, 1)'
+                }).onfinish = () => conf.remove();
+            }
+        }
+    </script>
+</body>
+</html>
